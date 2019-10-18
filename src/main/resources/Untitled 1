@@ -1,0 +1,246 @@
+package dragonmotion;
+
+ 
+
+import javafx.event.EventHandler;
+import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.paint.Color;
+ 
+public class SingleTrack {
+ 
+                FlowPane rootNode=new FlowPane();
+                Label namelabel;
+                final GraphicsContext gc;
+               
+                float stepwidth=3;
+                int interval=100;                              // 100ms interval
+                int steps=100;
+                int valueFields[];
+               
+                double oldx=-1;
+                double oldy=-1;
+                double newx,newy;
+               
+               
+                public SingleTrack(String name)
+                {
+                              
+                               valueFields=new int[steps];                      
+                               for(int tel=0;tel<steps;tel++)valueFields[tel]=50;
+                               valueFields[20]=30;
+                               valueFields[60]=50;
+                              
+                               //Canvas canvas = new Canvas(1000,100);
+                               Canvas canvas = new Canvas();
+                               canvas.setHeight(100);
+                               canvas.setWidth(1000);
+        gc = canvas.getGraphicsContext2D() ;
+                                                              
+                               drawMotionLine(gc);
+                              
+                              
+                               canvas.setOnMousePressed(new EventHandler<MouseEvent>() {
+ 
+                                               @Override
+                                               public void handle(MouseEvent ev) {
+                                                               System.out.println("Event is "+ ev.getEventType());
+                                                               oldx=ev.getX();
+                                                               oldy=ev.getY();
+                                                              
+                                               }});
+                              
+                              
+                               canvas.setOnMouseDragged(new EventHandler<MouseEvent>() {
+ 
+                                               @Override
+                                               public void handle(MouseEvent ev) {
+                                                               //System.out.println("Event is "+ ev.getEventType());
+                                                               newx=ev.getX();
+                                                               newy=ev.getY();
+                                                               drawMotionLine(gc);
+                                               }});
+                              
+                               canvas.setOnMouseReleased(new EventHandler<MouseEvent>() {
+ 
+                                               @Override
+                                               public void handle(MouseEvent ev) {
+                                                               System.out.println("Event is "+ ev.getEventType());
+                                                               //gc.strokeLine(oldx, oldy, ev.getX(), ev.getY());
+                                                               newx=ev.getX();
+                                                               newy=ev.getY();
+                                                              
+                                                              
+                                                               if(newx>oldx)straiten(oldx,oldy,newx,newy);
+                                                               else
+                                                               {
+                                                                               straiten(newx,newy,oldx,oldy);
+                                                               }
+                                                              
+                                                               oldx=-1;
+                                                               oldy=-1;
+                                                               drawMotionLine(gc);
+                                               }});
+                              
+                              
+                               /*canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
+ 
+                                               @Override
+                                               public void handle(MouseEvent ev) {
+                                                               //System.out.printf("mouse %f %f\n",ev.getX(),ev.getY());
+                                                               //System.out.println("Event is "+ ev.getButton());
+                                                               int subx=(int)(ev.getX()/10);
+                                                               int suby=(int)(ev.getY());
+                                                               int oldval=valueFields[subx];                                                                                                   
+                                                               valueFields[subx]=suby;
+                                                              
+                                                               int difval=Math.abs(suby-oldval);
+                                                               for(int tel=1;tel<5;tel++)
+                                                               {
+                                                                               difval=difval/2;
+                                                                               if(subx+tel<steps)
+                                                                                              {
+                                                                                              if(valueFields[subx+tel]<valueFields[subx]) valueFields[subx+tel]=valueFields[subx+tel]+difval;
+                                                                                              if(valueFields[subx+tel]>valueFields[subx]) valueFields[subx+tel]=valueFields[subx+tel]-difval;
+                                                                                              if(valueFields[subx+tel]<0)valueFields[subx+tel]=0;
+                                                                                              if(valueFields[subx+tel]>100)valueFields[subx+tel]=100;
+                                                                                              }
+                                                                               if(subx-tel>0)
+                                                                                              {                                                                                            
+                                                                                               if(valueFields[subx-tel]<valueFields[subx]) valueFields[subx-tel]=valueFields[subx-tel]+difval;
+                                                                                              if(valueFields[subx-tel]>valueFields[subx]) valueFields[subx-tel]=valueFields[subx-tel]-difval;
+                                                                                              if(valueFields[subx-tel]<0)valueFields[subx-tel]=0;
+                                                                                              if(valueFields[subx-tel]>100)valueFields[subx-tel]=100;
+                                                                                              }
+                                                               }
+                                                              
+                                                              
+                                                               drawMotionLine(gc);
+                                               }});*/
+                              
+                               namelabel=new Label(name);
+                               rootNode.getChildren().add(namelabel);
+                              
+                               rootNode.getChildren().add(canvas);
+                                                              
+                }
+ 
+               
+               
+                private void drawMotionLine(GraphicsContext gc)
+                {                             
+                               gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+                               gc.setFill(Color.BLACK);
+                               gc.setLineWidth(1.0);
+                              
+                               for(int tel=0;tel<steps;tel++)
+                               {
+                                               float topx=tel*10;
+                                               float topy=4.0f;
+                                               float bottomx=5;
+                                               float bottomy=valueFields[tel];
+                                               //System.out.printf("%d %f,%f,%f,%f\n",tel,topx,topy,bottomx,bottomy);
+                                               gc.strokeRect(topx,topy,bottomx,bottomy);
+                               }
+                               if(oldx>=0)
+                               {
+                                               gc.strokeLine(oldx, oldy, newx,newy);
+                               }
+                               //gc.strokeRect(0.000000,4.000000,5.000000,10.000000);
+                               //gc.strokeRect(10.000000,4.000000,5.000000,10.000000);
+                               //gc.strokeRect(20.000000,4.000000,5.000000,50.000000);
+                }
+               
+               
+               
+ 
+                public Node getNode() {
+                               // TODO Auto-generated method stub
+                               return rootNode;
+                }
+ 
+ 
+ 
+                public void smooth() {
+                               int total[]=new int[steps];
+                               total[0]=valueFields[0];
+                               total[steps-1]=valueFields[steps-1];
+                              
+                               for(int tel=1;tel<steps-1;tel++)
+                               {
+                                               int sub=(50-valueFields[tel-1])+(50-valueFields[tel])+(50-valueFields[tel+1]);
+                                               sub=sub/3;
+                                               total[tel]=50-sub;
+                                               /*if(valueFields[tel]<50)
+                                                               {int subtotal=valueFields[tel-1]+valueFields[tel]+valueFields[tel+1];
+                                                               total[tel]=subtotal/3;
+                                                               }
+                                               if(valueFields[tel]>50)
+                                                               {int subtotal=300-(valueFields[tel-1]+valueFields[tel]+valueFields[tel+1]);
+                                                               total[tel]=100-subtotal/3;
+                                                               }*/
+                               }
+                              
+                               for(int tel=0;tel<steps;tel++)
+                               {
+                                               valueFields[tel]=total[tel];
+                                               if(valueFields[tel]>100)valueFields[tel]=100;
+                                               if(valueFields[tel]<0)valueFields[tel]=0;
+                               }
+                              
+                               drawMotionLine(gc);
+                }
+               
+               
+               
+                public void maximize()
+                {
+                               int min=50;
+                               int max=50;                       
+                              
+                               double factor=1.1;
+                               for(int tel=0;tel<steps;tel++)
+                               {
+                                               if(valueFields[tel]<50)valueFields[tel]=(int)(valueFields[tel]/factor);
+                                               if(valueFields[tel]>50)valueFields[tel]=(int)(valueFields[tel]*factor);
+                                              
+                                               if(valueFields[tel]>100)valueFields[tel]=100;
+                                               if(valueFields[tel]<0)valueFields[tel]=0;
+                               }
+                              
+                              
+                               drawMotionLine(gc);
+                }
+               
+               
+                public void straiten(double startx,double starty,double endx,double endy)
+                {
+                              
+ 
+                               int intBegin=(int)(startx/10);
+                               int intEnd=(int)(endx/10);                           // bepaal de stappen
+                               int size=intEnd-intBegin;
+                              
+                               System.out.println("Begin "+intBegin+"  end "+intEnd+" size "+size);
+                              
+                               System.out.println("BeginY "+starty+"  endY "+endy);
+                              
+                               double arc=(endy-starty)/size;  // maak de helling
+                               System.out.println("Arc is "+arc);
+                              
+                              
+                               for(int tel=0;tel<size;tel++)
+                               {
+                                               //System.out.print("# "+tel+" oldval "+valueFields[tel+intBegin]);
+                                               valueFields[tel+intBegin]=(int)(starty+(int)(tel*arc));
+                                               //System.out.print("newval "+valueFields[tel+intBegin]+"\n");
+                               }
+                              
+                              
+                }
+               
+}
