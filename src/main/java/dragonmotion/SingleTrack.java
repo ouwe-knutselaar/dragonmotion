@@ -1,5 +1,8 @@
 package dragonmotion;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -417,6 +420,28 @@ public class SingleTrack {
 	public void toNull()
 	{
 		connect.setServo(servo, 0);
+	}
+	
+	public JSONObject toJson()
+	{
+		JSONObject tempjson=new JSONObject();
+		
+		tempjson.put("min",min);
+		tempjson.put("max",max);
+		tempjson.put("restpos", restpos);
+		tempjson.put("servo",servo);
+		tempjson.put("name",name);
+		
+		JSONArray valueJsonArray=new JSONArray();
+		
+		for(int value:valueFields)
+		{
+			valueJsonArray.add(value);
+		}
+		tempjson.put("values", valueJsonArray);
+		
+		return tempjson;
+		
 	}
 
 }

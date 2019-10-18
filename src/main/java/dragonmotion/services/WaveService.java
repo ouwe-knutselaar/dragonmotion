@@ -9,6 +9,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.json.simple.JSONObject;
+
 import dragonmotion.DragonMotion;
 
 public class WaveService {
@@ -29,6 +31,8 @@ public class WaveService {
 	
 	private double maxvol = 1;
 	
+	private String waveFile="none";
+	
 	private WaveService()
 	{
 		
@@ -43,9 +47,9 @@ public class WaveService {
 		return INSTANCE;
 	}
 	
-	
 	public boolean loadFile(File audioFile)
 	{
+		waveFile=audioFile.getAbsolutePath();
 		try {
 			audioInputStream=AudioSystem.getAudioInputStream(audioFile);
 			AudioFormat format=audioInputStream.getFormat();
@@ -107,7 +111,6 @@ public class WaveService {
 		return steps;
 	}
 	
-	
 	public int[][] getSample()
 	{
 		return samples;
@@ -122,4 +125,12 @@ public class WaveService {
 	{
 		return maxvol;
 	}
+
+
+	public String getWaveFile() {
+		return waveFile;
+	}
+	
+	
+	
 }

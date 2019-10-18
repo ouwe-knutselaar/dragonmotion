@@ -29,6 +29,7 @@ public class RunMotion implements Runnable {
 	
 	
 	public void run() {
+		System.out.println("Start sequence");
 		runFlag=true;
 		int numOfTracks=trackList.size();
 		for(int trackCount=0;trackCount<numOfTracks;trackCount++)
@@ -52,6 +53,7 @@ public class RunMotion implements Runnable {
 						{
 							trackList.get(counter).reset();
 						}
+						System.out.println("Interrupt sequence");
 						return;
 					}
 			}
@@ -71,6 +73,7 @@ public class RunMotion implements Runnable {
 		{
 			trackList.get(trackCount).reset();
 		}
+		System.out.println("Stop sequence");
 	}
 
 	
