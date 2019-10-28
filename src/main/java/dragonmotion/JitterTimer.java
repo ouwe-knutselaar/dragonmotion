@@ -85,4 +85,9 @@ public class JitterTimer implements Runnable {
 		timerFlag[timer]=flag;
 	}
 	
+	public void stopJitterTimer()
+	{
+		runFlag=false;
+	}
+	
 }

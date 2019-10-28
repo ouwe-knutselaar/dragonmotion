@@ -1,8 +1,5 @@
 package dragonmotion;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import dragonmotion.services.WaveService;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
@@ -85,8 +82,6 @@ public class WaveTrack {
 		}
 		
 	}
-	
-	
 	
 	public Node getNode() {
 		// TODO Auto-generated method stub

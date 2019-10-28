@@ -31,9 +31,11 @@ public class DragonUDP implements DragonConnect {
     private DragonUDP()
     {
     	try {
-			socket=new DatagramSocket();
+			socket=new DatagramSocket(80);
+			socket.setSoTimeout(10);
 			this.port=DragonMotion.port;
 			address = InetAddress.getByName(DragonMotion.ipadres);
+			
 			
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
@@ -94,13 +96,64 @@ public class DragonUDP implements DragonConnect {
     public int getPort() {
         return port;
     }
-
     
-
-
     
-    public String getIpadress() {
+    
+    public String getUPDContents()
+    {
+    	byte[] dtgBuffer=new byte[256];
+    	DatagramPacket dtgReceivded=new DatagramPacket(dtgBuffer,256);
+    	String result=null;
     	
+    	try {
+			socket.receive(dtgReceivded);
+			result=new String(dtgReceivded.getData(),0,dtgReceivded.getLength());
+			System.out.println("Package received from "+result);
+			result=dtgReceivded.getAddress().getHostAddress();
+			System.out.println("Ip adres is "+result);			
+		} catch (IOException e) {
+			//System.out.println("IO Excpetion:"+e.getMessage());
+			//e.printStackTrace();
+			
+		}
+    	
+    	return result;
+    	
+    }
+
+    
+    
+    public String scanForDragon(int port,String base)
+    {
+    	String result=null;
+    	String sendString="i";
+    	for(int tel=1;tel<255;tel++)
+    	{
+    		String scanAddr=base+"."+tel;
+    		System.out.println("Scan for "+scanAddr);
+    		try {
+				DatagramPacket sendPacket=new DatagramPacket(sendString.getBytes(),1,InetAddress.getByName(scanAddr),port);
+				socket.send(sendPacket);
+				result=getUPDContents();
+				if(result!=null)
+					{System.out.println("Result is " + result);
+					 return result;
+					}
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	
+    	return result;
+    }
+    
+
+    
+    public String getIpadress() {    	
     	return address.getHostAddress();        
     }
 
@@ -122,4 +175,18 @@ public class DragonUDP implements DragonConnect {
 		}
 		return INSTANCE;
 	}
+	
+	public void close()
+	{
+		try {
+			socket.close();
+			if(inStream!=null)inStream.close();
+			if(outStream!=null)outStream.close();
+		} catch (IOException e) {			
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 }

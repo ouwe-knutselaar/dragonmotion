@@ -111,4 +111,18 @@ public class DragonTelnet implements DragonConnect {
     public void setIpadress(String ipadress) {
         this.ipAdres=ipadress;
     }
+
+
+	@Override
+	public String scanForDragon(int port, String base) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
 }

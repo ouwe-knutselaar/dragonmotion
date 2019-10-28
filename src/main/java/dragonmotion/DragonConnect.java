@@ -10,7 +10,9 @@ public interface DragonConnect {
     public int getPort();
    // public void setPort(int port);
     public String getIpadress();
-   // public void setIpadress(String ipadress);
+    public void setIpadress(String ipadress);
     public void setAllServos(int s[]);
+    public String scanForDragon(int port,String base);
+    public void close();
    
 }
