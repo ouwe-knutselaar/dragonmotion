@@ -24,12 +24,12 @@ import javafx.scene.text.Font;
 @SuppressWarnings("restriction")
 public class SingleTrack {
 
-	float stepwidth = 3;
-	float interval = DragonMotion.interval; // 100ms interval
-	int steps ;
-	int valueFields[];
-	int looppoint = 0;
-	int barwidth = 10;
+	private float stepwidth = 3;
+	private float interval = DragonMotion.interval; // 100ms interval
+	private int steps ;
+	private int valueFields[];
+	private int looppoint = 0;
+	private int barwidth = 10;
 
 	//int canvaswidth = steps * barwidth;
 
@@ -38,25 +38,25 @@ public class SingleTrack {
 	private int restpos;
 	private int servo = 1;
 
-	int counter = 0;
+	private int counter = 0;
 
-	double oldx = -1;
-	double oldy = -1;
-	double newx, newy;
+	private double oldx = -1;
+	private double oldy = -1;
+	private double newx, newy;
 
-	FlowPane rootNode = new FlowPane();
+	private FlowPane rootNode = new FlowPane();
 	
-	Label namelabel;
-	TextField maxField = new TextField();
-	TextField minField = new TextField();
-	TextField restposField = new TextField();
-	TextField servoField = new TextField("" + servo);
+	private Label namelabel;
+	private TextField maxField = new TextField();
+	private TextField minField = new TextField();
+	private TextField restposField = new TextField();
+	private TextField servoField = new TextField("" + servo);
 	final GraphicsContext gc;
-	Slider sl = new Slider();
-	Button smooth = new Button("smooth");
-	Button maximize = new Button("maximize");
-	CheckBox record=new CheckBox("Record");
-	DragonConnect connect = DragonUDP.getService();
+	private Slider sl = new Slider();
+	private Button smooth = new Button("smooth");
+	private Button maximize = new Button("maximize");
+	private CheckBox record=new CheckBox("Record");
+	private DragonConnect connect = DragonUDP.getService();
 
 	private final String name;
 
@@ -418,5 +418,27 @@ public class SingleTrack {
 	{
 		connect.setServo(servo, 0);
 	}
+
+	public int[] getValueFields() {
+		return valueFields;
+	}
+
+	public int getMin() {
+		return min;
+	}
+
+	public int getMax() {
+		return max;
+	}
+
+	public int getRestpos() {
+		return restpos;
+	}
+
+	public String getName() {
+		return name;
+	}
+	
+	
 
 }

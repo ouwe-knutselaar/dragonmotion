@@ -16,15 +16,14 @@ import java.net.UnknownHostException;
 public class DragonUDP implements DragonConnect {
 
 
-	DatagramSocket socket;
-    int port;    
-    InputStream inStream;
-    OutputStream outStream;
-    byte inbuffer[]=new byte[10];
-    byte sendBuffer[]=new byte[256];
-    int sendsize;
-    InetAddress address;
-    
+	private DatagramSocket socket;
+	private int port;    
+	private InputStream inStream;
+	private OutputStream outStream;
+	private byte inbuffer[]=new byte[10];
+	private byte sendBuffer[]=new byte[256];
+	private int sendsize;
+	private InetAddress address;
     private static DragonUDP INSTANCE;
     
 

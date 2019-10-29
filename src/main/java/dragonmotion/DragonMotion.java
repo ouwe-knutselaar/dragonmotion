@@ -5,6 +5,7 @@ package dragonmotion;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -264,8 +265,42 @@ public class DragonMotion extends Application{
 				System.out.println("-> " + result);
 			}
 		});
+		
+		
+		save.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				System.out.println("Load sequence");
+				FileChooser fileChooser = new FileChooser();
+				fileChooser.setTitle("Open Sequence File");
+				fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Sequencer Files", "*.seq"),
+						new ExtensionFilter("All Files", "*.*"));
+				File selectedFile = fileChooser.showSaveDialog(primaryStage);
+				if (selectedFile != null) {
+					saveSequencerFile(selectedFile);
+					}
+				}
+				
+			});
+		
+		
+		load.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event) {
+				System.out.println("Load sequence");
+				FileChooser fileChooser = new FileChooser();
+				fileChooser.setTitle("Open Sequence File");
+				fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Sequencer Files", "*.seq"),
+						new ExtensionFilter("All Files", "*.*"));
+				File selectedFile = fileChooser.showOpenDialog(primaryStage);
+				if (selectedFile != null) {
+					loadSequencerFile(selectedFile);
+					}
+				}
+				
+			});
 
-		scanForDragon.setOnAction(new EventHandler<ActionEvent>() {			
+		scanForDragon.setOnAction(new EventHandler<ActionEvent>(){			
 			@Override
 			public void handle(ActionEvent arg0) {
 				ScanForDragon();
@@ -274,8 +309,9 @@ public class DragonMotion extends Application{
 		loadSample.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				System.out.println("Load sample");
 				FileChooser fileChooser = new FileChooser();
-				fileChooser.setTitle("Open Resource File");
+				fileChooser.setTitle("Open Wave File");
 				fileChooser.getExtensionFilters().addAll(new ExtensionFilter("Wave Files", "*.wav"),
 						new ExtensionFilter("All Files", "*.*"));
 				File selectedFile = fileChooser.showOpenDialog(primaryStage);
@@ -300,6 +336,27 @@ public class DragonMotion extends Application{
 		};
        
        
+		public void loadSequencerFile(File seqFile)
+		{
+		}
+		
+		public void saveSequencerFile(File seqFile)
+		{
+			
+			//Files safeFile=Files.createFile(seqFile.getAbsolutePath(), null);
+			
+			for(SingleTrack track: TrackList)
+			{
+				String name=track.getName();
+				int min=track.getMin();
+				int max=track.getMax();
+				int restpos=track.getRestpos();
+				int[] values=track.getValueFields();
+				
+				
+			}
+		}
+		
        public Dialog<DialogValues> buildDialog()
        {
     	   Label ipadresLabel=new Label("IP Address");
