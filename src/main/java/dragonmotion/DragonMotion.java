@@ -2,7 +2,12 @@ package dragonmotion;
 
  
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -338,23 +343,102 @@ public class DragonMotion extends Application{
        
 		public void loadSequencerFile(File seqFile)
 		{
+			FileReader inFile=null;
+			
+			try {
+				inFile=new FileReader(seqFile);
+			
+				BufferedReader bufReader=new BufferedReader(inFile);
+				String line=bufReader.readLine();
+				while(line!=null)
+				{
+				if(line.equals("<BEGINOFTRACK>"))
+				  {
+					String name=bufReader.readLine();
+					int min=Integer.parseInt(bufReader.readLine());
+					int max=Integer.parseInt(bufReader.readLine());
+					int rest=Integer.parseInt(bufReader.readLine());
+					int servo=Integer.parseInt(bufReader.readLine());
+					int steps=Integer.parseInt(bufReader.readLine());
+					
+					StringBuilder valueLine=new StringBuilder();
+					while(!line.equals("<ENDOFTRACK>"))
+					{
+						line=bufReader.readLine();
+						valueLine.append(line);	
+					}
+					
+					fillTrack(name,min,max,rest,servo,steps,valueLine.toString());
+				  }
+				line=bufReader.readLine();
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return;
+			}
 		}
 		
+		
+		private void fillTrack(String name, int min, int max, int rest, int servo, int steps, String valueLine) {
+			for(SingleTrack track:TrackList)
+			{
+				if(track.getName().equals(name))
+				{
+					track.refill(min,max,rest,servo,steps,valueLine);
+				}
+			}
+			
+		}
+
+
+
+
 		public void saveSequencerFile(File seqFile)
 		{
+			FileWriter outFile=null;
+			try {
+				outFile=new FileWriter(seqFile);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return;
+			}
 			
-			//Files safeFile=Files.createFile(seqFile.getAbsolutePath(), null);
-			
+			StringBuilder outline=new StringBuilder();
+			outline.append("<BEGINOFFILE>\n");
 			for(SingleTrack track: TrackList)
 			{
-				String name=track.getName();
-				int min=track.getMin();
-				int max=track.getMax();
-				int restpos=track.getRestpos();
+				outline.append("<BEGINOFTRACK>\n");
+				outline.append(track.getName()).append("\n");		// name
+				outline.append(track.getMin()).append("\n");			// min
+				outline.append(track.getMax()).append("\n");			// max
+				outline.append(track.getRestpos()).append("\n");	// rest
+				outline.append(track.getServo()).append("\n");		// servo
+				
 				int[] values=track.getValueFields();
+				outline.append(values.length).append("\n");
 				
-				
+				for(int tel=0;tel<values.length;tel++)
+				{
+					outline.append(values[tel]).append(" ");
+					if((tel+1) % 50 == 0)outline.append("\n");
+				}
+				outline.append("\n<ENDOFTRACK>\n");
 			}
+			outline.append("<ENDOFFILE>\n");
+			try {
+				outFile.write(outline.toString());
+				outFile.flush();
+				outFile.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return;
+			}
+			System.out.println("File saved");
+			messages.setText("File saved");
 		}
 		
        public Dialog<DialogValues> buildDialog()

@@ -45,6 +45,7 @@ public class SingleTrack {
 	private double newx, newy;
 
 	private FlowPane rootNode = new FlowPane();
+	private Canvas canvas;
 	
 	private Label namelabel;
 	private TextField maxField = new TextField();
@@ -88,7 +89,7 @@ public class SingleTrack {
 
 		}
 
-		Canvas canvas = new Canvas(steps * barwidth, 120); // 100 voor het canvas en
+		canvas = new Canvas(steps * barwidth, 120); // 100 voor het canvas en
 														// 20 voor de tekst er
 														// onder
 		gc = canvas.getGraphicsContext2D();
@@ -437,6 +438,26 @@ public class SingleTrack {
 
 	public String getName() {
 		return name;
+	}
+
+	public void refill(int min, int max, int rest, int servo, int steps, String valueLine) {
+		this.steps=steps;
+		this.min=min;
+		this.max=max;
+		this.restpos=rest;
+		this.servo=servo;
+		realStep = ((float) (max - min)) / 100;
+		
+		valueFields = new int[steps];
+		String[]  strValues=valueLine.split(" ");
+		for(int tel=0;tel<steps;tel++)
+		{
+			valueFields[tel]=Integer.parseInt(strValues[tel]);
+		}
+		
+		canvas.setWidth(steps * barwidth);
+		
+		redraw();
 	}
 	
 	
