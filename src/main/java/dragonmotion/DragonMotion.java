@@ -54,7 +54,7 @@ public class DragonMotion extends Application{
 	static String ipadres="192.168.178.29";
 	static int port=80;
 	public static float interval=0.050f;						// Step interval 50 ms
-	int steps=200;
+	public static int steps=200;
 	static int timerInterval=200;				// disble timer interval to prevent servo jitter
 	
 	   RunMotion runMotion;
@@ -181,6 +181,8 @@ public class DragonMotion extends Application{
              jitterThread=new Thread(jitterTimer);
              jitterThread.start();
              
+             
+             resetTracklist();						// Maak de tracks om ze straks te laten zien
              root.setLeft(buttonPane);
              root.setCenter(buildCenter(steps));
              root.setBottom(msgPane);
@@ -203,38 +205,22 @@ public class DragonMotion extends Application{
 	}
 
 
-
-
+    // Build the graphical shell
 	public Node buildCenter(int steps)
        {
     	   
     	   System.out.println("Make a sequence of "+steps+" steps");
     	   VBox rightPane=new VBox();
            
-
-    	   //TrackList.add(new SingleTrack("none",3,0,4096,0,false,steps));
-    	   //TrackList.add(new SingleTrack("none",4,0,4096,0,false,steps));
-    	   //TrackList.add(new SingleTrack("none",5,0,4096,0,false,steps));
-    	   //TrackList.add(new SingleTrack("none",6,0,4096,0,false,steps));
-    	   TrackList.add(new SingleTrack("Head turn",8,200,500,350,true,steps));       
-    	   TrackList.add(new SingleTrack("Tail",9,50,400,225,true,steps));
-    	   TrackList.add(new SingleTrack("Neck muscle right",10,50,350,225,true,steps));
-    	   TrackList.add(new SingleTrack("Neck muscle left",11,50,400,225,true,steps));
-    	   TrackList.add(new SingleTrack("Hips",12,300,410,370,false,steps));
-    	   TrackList.add(new SingleTrack("wing right",13,310,500,490,false,steps));
-    	   TrackList.add(new SingleTrack("Wing left",14,110,300,120,false,steps));
-    	   TrackList.add(new SingleTrack("Eye green",0,0,4080,0,false,steps));
-    	   TrackList.add(new SingleTrack("Eye red",1,0,4080,0,false,steps));
-    	   TrackList.add(new SingleTrack("Eye blue",2,0,4096,0,false,steps));
-    	   TrackList.add(new SingleTrack("Jaw",7,230,320,310,true,steps));
-    	   //TrackList.add(new SingleTrack("none",15,150,450,200,false,steps));
-
+    	   // Add the track pointers to the runMotion
+    	   runMotion.clearTrack();
     	   TrackList.forEach(track -> runMotion.addTrack(track));
        
+    	   // Add the tracks to the right pane
     	   rightPane.setPadding(new Insets(5));
-    	   
            TrackList.forEach(track -> rightPane.getChildren().add(track.getNode()));
            
+           // Add the wave track
            wv1=new WaveTrack(primaryStage);
            rightPane.getChildren().add(wv1.getNode());
     	   
@@ -267,7 +253,13 @@ public class DragonMotion extends Application{
 				Dialog<DialogValues> dialog = buildDialog();
 				Optional<DialogValues> result = dialog.showAndWait();
 
-				System.out.println("-> " + result);
+				System.out.println("-> " + result.get().getSteps());
+				int newSteps=result.get().getSteps();
+				if(steps!=newSteps)
+				{
+					steps=newSteps;
+					RebuildCenter();
+				}
 			}
 		});
 		
@@ -322,6 +314,7 @@ public class DragonMotion extends Application{
 				File selectedFile = fileChooser.showOpenDialog(primaryStage);
 				if (selectedFile != null) {
 					if (waveService.loadFile(selectedFile)) {
+						steps=waveService.getSteps();
 						RebuildCenter();
 					}
 				}
@@ -332,14 +325,35 @@ public class DragonMotion extends Application{
 		return menuBar;
 	}
        
-       private void RebuildCenter() {
-			steps=waveService.getSteps();
-			TrackList.clear();
-			root.setCenter(null);
-			root.setCenter(buildCenter(steps));
-			
-		};
-       
+	public void resetTracklist() {
+		TrackList.clear();
+
+		// Add all tracks
+		// TrackList.add(new SingleTrack("none",3,0,4096,0,false,steps));
+		// TrackList.add(new SingleTrack("none",4,0,4096,0,false,steps));
+		// TrackList.add(new SingleTrack("none",5,0,4096,0,false,steps));
+		// TrackList.add(new SingleTrack("none",6,0,4096,0,false,steps));
+		TrackList.add(new SingleTrack("Head turn", 8, 200, 500, 350, true, steps));
+		TrackList.add(new SingleTrack("Tail", 9, 50, 400, 225, true, steps));
+		TrackList.add(new SingleTrack("Neck muscle right", 10, 50, 350, 225, true, steps));
+		TrackList.add(new SingleTrack("Neck muscle left", 11, 50, 400, 225, true, steps));
+		TrackList.add(new SingleTrack("Hips", 12, 300, 410, 370, false, steps));
+		TrackList.add(new SingleTrack("wing right", 13, 310, 500, 490, false, steps));
+		TrackList.add(new SingleTrack("Wing left", 14, 110, 300, 120, false, steps));
+		TrackList.add(new SingleTrack("Eye green", 0, 0, 4080, 0, false, steps));
+		TrackList.add(new SingleTrack("Eye red", 1, 0, 4080, 0, false, steps));
+		TrackList.add(new SingleTrack("Eye blue", 2, 0, 4096, 0, false, steps));
+		TrackList.add(new SingleTrack("Jaw", 7, 230, 320, 310, true, steps));
+		// TrackList.add(new SingleTrack("none",15,150,450,200,false,steps));
+	}
+	
+	private void RebuildCenter() {
+		resetTracklist();
+
+		root.setCenter(null);
+		root.setCenter(buildCenter(steps));
+
+	};
        
 		public void loadSequencerFile(File seqFile)
 		{
@@ -352,6 +366,12 @@ public class DragonMotion extends Application{
 				String line=bufReader.readLine();
 				while(line!=null)
 				{
+				if(line.equals("<BEGINOFFILE>"))
+				{
+					steps=Integer.parseInt(bufReader.readLine());
+					System.out.println("new numbers of steps is "+steps);
+					resetTracklist();
+				}
 				if(line.equals("<BEGINOFTRACK>"))
 				  {
 					String name=bufReader.readLine();
@@ -359,39 +379,38 @@ public class DragonMotion extends Application{
 					int max=Integer.parseInt(bufReader.readLine());
 					int rest=Integer.parseInt(bufReader.readLine());
 					int servo=Integer.parseInt(bufReader.readLine());
-					int steps=Integer.parseInt(bufReader.readLine());
+					String valueLine=bufReader.readLine();
 					
-					StringBuilder valueLine=new StringBuilder();
-					while(!line.equals("<ENDOFTRACK>"))
+					String endTrack=bufReader.readLine();;
+					if(!endTrack.equals("<ENDOFTRACK>"))
+						{
+						 System.out.println("Error in the file");
+						 return;
+						}
+					
+					
+					for(SingleTrack track:TrackList)
 					{
-						line=bufReader.readLine();
-						valueLine.append(line);	
+						if(track.getName().equals(name))
+						{
+							track.fillTrack(valueLine);
+						}
 					}
 					
-					fillTrack(name,min,max,rest,servo,steps,valueLine.toString());
 				  }
 				line=bufReader.readLine();
 				}
 				
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 				return;
 			}
-		}
-		
-		
-		private void fillTrack(String name, int min, int max, int rest, int servo, int steps, String valueLine) {
-			for(SingleTrack track:TrackList)
-			{
-				if(track.getName().equals(name))
-				{
-					track.refill(min,max,rest,servo,steps,valueLine);
-				}
-			}
+			root.setCenter(null);
+			root.setCenter(buildCenter(steps));
 			
 		}
-
+		
 
 
 
@@ -401,13 +420,14 @@ public class DragonMotion extends Application{
 			try {
 				outFile=new FileWriter(seqFile);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 				return;
 			}
 			
 			StringBuilder outline=new StringBuilder();
 			outline.append("<BEGINOFFILE>\n");
+			outline.append(steps).append("\n");
 			for(SingleTrack track: TrackList)
 			{
 				outline.append("<BEGINOFTRACK>\n");
@@ -418,12 +438,12 @@ public class DragonMotion extends Application{
 				outline.append(track.getServo()).append("\n");		// servo
 				
 				int[] values=track.getValueFields();
-				outline.append(values.length).append("\n");
+				
 				
 				for(int tel=0;tel<values.length;tel++)
 				{
 					outline.append(values[tel]).append(" ");
-					if((tel+1) % 50 == 0)outline.append("\n");
+					//if((tel+1) % 50 == 0)outline.append("\n");
 				}
 				outline.append("\n<ENDOFTRACK>\n");
 			}
@@ -433,13 +453,14 @@ public class DragonMotion extends Application{
 				outFile.flush();
 				outFile.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 				return;
 			}
 			System.out.println("File saved");
 			messages.setText("File saved");
 		}
+
 		
        public Dialog<DialogValues> buildDialog()
        {
@@ -465,6 +486,14 @@ public class DragonMotion extends Application{
     	   
     	   dialog.getDialogPane().setContent(grid);
     	   
+    	   dialog.setResultConverter(dialogButton -> 	{if(dialogButton == buttonTypeOk)
+    	   													{
+    		   												 return new DialogValues(ipadresTf.getText(),Integer.parseInt(portTf.getText()),Integer.parseInt(stepsTf.getText()));
+    	   													}
+    	   												 else
+    	   													 return null;
+    	   												});
+    	   
     	   return dialog;
     	   
        }
@@ -478,8 +507,8 @@ public class DragonMotion extends Application{
 		try {
 			localAddress = InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
+			
+			e.printStackTrace();
 		}
            String netnums[]=localAddress.split(Pattern.quote("."));
            localAddress=netnums[0]+"."+netnums[1]+"."+netnums[2];
@@ -497,8 +526,8 @@ public class DragonMotion extends Application{
           	 try {
 				ipadres=InetAddress.getLocalHost().getHostAddress();
 			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
+				
+				e.printStackTrace();
 			}
            }
        }

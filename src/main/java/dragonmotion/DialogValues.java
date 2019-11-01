@@ -7,6 +7,14 @@ public class DialogValues {
 	private int steps;
 	
 	
+	
+	public DialogValues(String ipadres, int port, int steps) {
+		super();
+		this.ipadres = ipadres;
+		this.port = port;
+		this.steps = steps;
+	}
+
 	public String getIpadres() {
 		return ipadres;
 	}

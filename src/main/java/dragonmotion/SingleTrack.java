@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderStrokeStyle;
 import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
@@ -44,7 +45,7 @@ public class SingleTrack {
 	private double oldy = -1;
 	private double newx, newy;
 
-	private FlowPane rootNode = new FlowPane();
+	private VBox rootNode = new VBox();
 	private Canvas canvas;
 	
 	private Label namelabel;
@@ -78,8 +79,8 @@ public class SingleTrack {
 
 		this.jitterFlag = jitterflag;
 
-		rootNode.setVgap(10);
-		rootNode.setHgap(10);
+		//rootNode.setVgap(10);
+		//rootNode.setHgap(10);
 		BorderStroke borderStroke=new BorderStroke(Color.DARKGRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,BorderWidths.DEFAULT);
 		rootNode.setBorder(new Border(borderStroke));
 
@@ -242,15 +243,19 @@ public class SingleTrack {
 			}
 		});
 
-		rootNode.getChildren().add(namelabel);
-		rootNode.getChildren().add(servoField);
-		rootNode.getChildren().add(minField);
-		rootNode.getChildren().add(maxField);
-		rootNode.getChildren().add(restposField);
-		rootNode.getChildren().add(sl);
-		rootNode.getChildren().add(smooth);
-		rootNode.getChildren().add(maximize);
-		rootNode.getChildren().add(record);
+		FlowPane topPane=new FlowPane();
+		
+		topPane.getChildren().add(namelabel);
+		topPane.getChildren().add(servoField);
+		topPane.getChildren().add(minField);
+		topPane.getChildren().add(maxField);
+		topPane.getChildren().add(restposField);
+		topPane.getChildren().add(sl);
+		topPane.getChildren().add(smooth);
+		topPane.getChildren().add(maximize);
+		topPane.getChildren().add(record);
+		
+		rootNode.getChildren().add(topPane);
 		rootNode.getChildren().add(canvas);
 
 		connect.setServo(servo, restpos);
@@ -342,27 +347,23 @@ public class SingleTrack {
 	public void straiten(double startx,double starty,double endx,double endy)
     {
                   
-
                    int intBegin=(int)(startx/10);
                    int intEnd=(int)(endx/10);                           // bepaal de stappen
                    int size=intEnd-intBegin;
                   
-                   System.out.println("Begin "+intBegin+"  end "+intEnd+" size "+size);
-                  
+                   System.out.println("Begin "+intBegin+"  end "+intEnd+" size "+size);            
                    System.out.println("BeginY "+starty+"  endY "+endy);
                   
                    double arc=(endy-starty)/size;  // maak de helling
                    System.out.println("Arc is "+arc);
-                  
-                  
+                                  
                    for(int tel=0;tel<size;tel++)
                    {
-                                   //System.out.print("# "+tel+" oldval "+valueFields[tel+intBegin]);
-                                   valueFields[tel+intBegin]=(int)(starty+(int)(tel*arc));
-                                   //System.out.print("newval "+valueFields[tel+intBegin]+"\n");
+                       //System.out.print("# "+tel+" oldval "+valueFields[tel+intBegin]);
+                	   if(tel+intBegin<steps & tel+intBegin>=0)valueFields[tel+intBegin]=(int)(starty+(int)(tel*arc));
+                       //System.out.print("newval "+valueFields[tel+intBegin]+"\n");
                    }
-                  
-                  
+                                
     }
 
 	public void redraw() {
@@ -440,25 +441,26 @@ public class SingleTrack {
 		return name;
 	}
 
-	public void refill(int min, int max, int rest, int servo, int steps, String valueLine) {
-		this.steps=steps;
-		this.min=min;
-		this.max=max;
-		this.restpos=rest;
-		this.servo=servo;
-		realStep = ((float) (max - min)) / 100;
+	public void fillTrack(String string) {
 		
-		valueFields = new int[steps];
-		String[]  strValues=valueLine.split(" ");
-		for(int tel=0;tel<steps;tel++)
+		String valueStringList[]=string.split(" ");
+		int size=valueStringList.length;
+		
+		if(size!=steps)
 		{
-			valueFields[tel]=Integer.parseInt(strValues[tel]);
+			System.out.println("Step size problem");
+			return;
 		}
 		
-		canvas.setWidth(steps * barwidth);
-		
+		valueFields = new int[size];
+		for(int tel=0;tel<size;tel++)
+		{
+			valueFields[tel]=Integer.parseInt(valueStringList[tel]);
+		}
 		redraw();
 	}
+
+
 	
 	
 

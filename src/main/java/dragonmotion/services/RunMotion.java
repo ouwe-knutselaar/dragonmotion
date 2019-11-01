@@ -11,7 +11,7 @@ public class RunMotion implements Runnable {
 	
 	ArrayList<SingleTrack> trackList=new ArrayList<>();
 	
-	float interval=DragonMotion.interval;
+	//float interval=DragonMotion.interval;
 	int steps;
 	boolean runFlag=false;
 	
@@ -22,7 +22,6 @@ public class RunMotion implements Runnable {
 	public RunMotion(int port)
 	{
 
-		this.steps=steps;
 	}
 	
 	
@@ -31,36 +30,42 @@ public class RunMotion implements Runnable {
 	public void run() {
 		runFlag=true;
 		int numOfTracks=trackList.size();
+		
+		// Reset all the tracks to the begin 
 		for(int trackCount=0;trackCount<numOfTracks;trackCount++)
 		{
 			trackList.get(trackCount).reset();
 		}
 		
-		for(int tel=0;tel<steps;tel++)
+		// Thr mail loop
+		System.out.println("Start the run");
+		for(int tel=0;tel<DragonMotion.steps;tel++)
 		{
-			//System.out.printf("step  %d:\t",tel);
-			for(int trackCount=0;trackCount<numOfTracks;trackCount++)
+			System.out.printf("step  %d:\t",tel);
+			for(int trackCount=0;trackCount<numOfTracks;trackCount++)		// Loop langs elke track
 			{
-				int servoValue=trackList.get(trackCount).getNextReal();
+				int servoValue=trackList.get(trackCount).getNextReal();		// haal de servo waarde op
 				trackList.get(trackCount).setLooppoint(tel);
-				//System.out.printf("%d\t", servoValue);
+				System.out.printf("%d\t", servoValue);
 				
-				slist[trackCount]=servoValue;
-				if(runFlag!=true)
+				slist[trackCount]=servoValue;								// Voeg de servo waarde aan de lijst to
+				if(runFlag!=true)											// Als de runflag false is stop dan alles
 					{
 						for(int counter=0;counter<numOfTracks;counter++)
 						{
 							trackList.get(counter).reset();
 						}
+						System.out.println("Loop ended manually");
 						return;
 					}
 			}
-			network.setAllServos(slist);
+			network.setAllServos(slist);									// Set the servo's 
 			
 			//System.out.printf("\n");
 			
 			try {
-				Thread.sleep((int)interval*1000);
+				//Thread.sleep((int)DragonMotion.interval*1000);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -71,22 +76,19 @@ public class RunMotion implements Runnable {
 		{
 			trackList.get(trackCount).reset();
 		}
+		
+		System.out.println("Loop ended");
 	}
 
+	
+	public void clearTrack()
+	{
+		trackList.clear();
+	}
 	
 	public void addTrack(SingleTrack track)
 	{
 		trackList.add(track);
-	}
-
-
-	public float getInterval() {
-		return interval;
-	}
-
-
-	public void setInterval(float interval) {
-		this.interval = interval;
 	}
 
 
