@@ -52,7 +52,7 @@ public class DragonMotion extends Application{
 	
 		// Defaults
 	static String ipadres="192.168.178.29";
-	static int port=80;
+	static int port=1080;
 	public static float interval=0.050f;						// Step interval 50 ms
 	public static int steps=200;
 	static int timerInterval=200;				// disble timer interval to prevent servo jitter
@@ -112,8 +112,6 @@ public class DragonMotion extends Application{
              // Zoek de draak
              ScanForDragon();
              
-             
-             
              root = new BorderPane();
             
              GridPane buttonPane=new GridPane();
@@ -152,14 +150,11 @@ public class DragonMotion extends Application{
 					
 				}});
              
-             
-             
              torest.setOnMouseClicked(new EventHandler<MouseEvent>(){
  				public void handle(MouseEvent event) {
  					TrackList.forEach(track -> track.toRest());
  				}
              });
-             
              
              tonull.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
@@ -177,10 +172,8 @@ public class DragonMotion extends Application{
             	 tel++;
              }
 
-             
              jitterThread=new Thread(jitterTimer);
              jitterThread.start();
-             
              
              resetTracklist();						// Maak de tracks om ze straks te laten zien
              root.setLeft(buttonPane);
@@ -189,8 +182,7 @@ public class DragonMotion extends Application{
              root.setTop(buildMenu());
              
              primaryStage.setScene(new Scene(root, 1200, 800));
-             primaryStage.show();
-            
+             primaryStage.show();  
        }
 
        
@@ -325,6 +317,7 @@ public class DragonMotion extends Application{
 		return menuBar;
 	}
        
+	
 	public void resetTracklist() {
 		TrackList.clear();
 
@@ -347,9 +340,9 @@ public class DragonMotion extends Application{
 		// TrackList.add(new SingleTrack("none",15,150,450,200,false,steps));
 	}
 	
+	
 	private void RebuildCenter() {
 		resetTracklist();
-
 		root.setCenter(null);
 		root.setCenter(buildCenter(steps));
 
@@ -512,7 +505,7 @@ public class DragonMotion extends Application{
 		}
            String netnums[]=localAddress.split(Pattern.quote("."));
            localAddress=netnums[0]+"."+netnums[1]+"."+netnums[2];
-           ipadres=tempConnect.scanForDragon(80, localAddress);
+           ipadres=tempConnect.scanForDragon(port, localAddress);
            if(ipadres!=null)
            {
           	 System.out.println("Dragon is at "+ipadres);

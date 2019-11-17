@@ -30,7 +30,7 @@ public class DragonUDP implements DragonConnect {
     private DragonUDP()
     {
     	try {
-			socket=new DatagramSocket(80);
+			socket=new DatagramSocket(1080);
 			socket.setSoTimeout(10);
 			this.port=DragonMotion.port;
 			address = InetAddress.getByName(DragonMotion.ipadres);
@@ -107,16 +107,20 @@ public class DragonUDP implements DragonConnect {
     	try {
 			socket.receive(dtgReceivded);
 			result=new String(dtgReceivded.getData(),0,dtgReceivded.getLength());
-			System.out.println("Package received from "+result);
-			result=dtgReceivded.getAddress().getHostAddress();
-			System.out.println("Ip adres is "+result);			
+			System.out.println("Package received from \""+result+"\"");
+			if(result.startsWith("dragonresponse"))
+				{
+				 result=dtgReceivded.getAddress().getHostAddress();
+				 System.out.println("Ip adres is "+result);	
+				 return result;
+				}
 		} catch (IOException e) {
 			//System.out.println("IO Excpetion:"+e.getMessage());
 			//e.printStackTrace();
 			
 		}
     	
-    	return result;
+    	return null;
     	
     }
 
@@ -129,7 +133,7 @@ public class DragonUDP implements DragonConnect {
     	for(int tel=1;tel<255;tel++)
     	{
     		String scanAddr=base+"."+tel;
-    		System.out.println("Scan for "+scanAddr);
+    		System.out.println("Scan for "+scanAddr+" on port "+port);
     		try {
 				DatagramPacket sendPacket=new DatagramPacket(sendString.getBytes(),1,InetAddress.getByName(scanAddr),port);
 				socket.send(sendPacket);

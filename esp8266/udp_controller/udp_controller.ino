@@ -5,7 +5,7 @@
 
 bool debug = true;
 bool setupBusy = true;
-uint16_t port=80;
+uint16_t port=1080;
 
 WiFiUDP server;
 
@@ -43,8 +43,8 @@ void setup() {
   if (debug)Serial.printf("%d.%d.%d.%d\n", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);          // Send the IP address of the ESP8266 to the computer
 
   // Start the telnet server
-  if (debug)Serial.printf("Start UDP server\n");
-  server.begin(80);
+  if (debug)Serial.printf("Start UDP server on port %d\n",port);
+  server.begin(port);
   //server.setNoDelay(true);
   setupBusy = false;
 }
@@ -95,7 +95,7 @@ void loop() {
       if (debug)Serial.print("package from "+server.remoteIP().toString()+" and remote port "+server.remotePort()+"\n");
       
       // send a reply, to the IP address and port that sent us the packet we received      
-      server.beginPacket(server.remoteIP(), 80);
+      server.beginPacket(server.remoteIP(), port);
       char sendbuf[]="dragonresponse";
       server.write(sendbuf,sizeof(sendbuf));
       server.endPacket();
