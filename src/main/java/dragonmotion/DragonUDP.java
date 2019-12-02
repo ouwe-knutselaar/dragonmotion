@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import org.apache.log4j.Logger;
+
 /**
  * Created by Erwin on 20-8-2019.
  */
@@ -16,11 +18,12 @@ import java.net.UnknownHostException;
 public class DragonUDP implements DragonConnect {
 
 
+	Logger log=Logger.getLogger(DragonUDP.class);
+	
 	private DatagramSocket socket;
 	private int port;    
 	private InputStream inStream;
 	private OutputStream outStream;
-	private byte inbuffer[]=new byte[10];
 	private byte sendBuffer[]=new byte[256];
 	private int sendsize;
 	private InetAddress address;
@@ -37,10 +40,10 @@ public class DragonUDP implements DragonConnect {
 			
 			
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		} 
     }
@@ -50,7 +53,7 @@ public class DragonUDP implements DragonConnect {
     public void setAllServos(int s[])
     {    	
     	String sendstr=String.format("a%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d%04d",s[0],s[1],s[2],s[3],s[4],s[5],s[6],s[7],s[8],s[9],s[10],s[11],s[12],s[13],s[14],s[15]);
-    	
+    	//log.info("send: "+sendstr);
             try {
                 //System.out.printf("SetAllServos() UDP Socket no connected, make new connection to %s at port %d \n",address.getHostAddress(),port);                                         
                 //socket.setSoTimeout(50);
@@ -72,7 +75,7 @@ public class DragonUDP implements DragonConnect {
 
 		String sendstr = String.format("s%04d%04d", servoNumber, value);
 		try {
-            System.out.printf("SetServo() UDP Socket no connected, make new connection to %s at port %d to set servo %d on value %d\n",address.getHostAddress(),port,servoNumber,value);                                         
+            log.debug(String.format("SetServo() UDP Socket no connected, make new connection to %s at port %d to set servo %d on value %d",address.getHostAddress(),port,servoNumber,value));                                         
             //socket.setSoTimeout(50);
             
             sendBuffer=sendstr.getBytes();
@@ -107,11 +110,11 @@ public class DragonUDP implements DragonConnect {
     	try {
 			socket.receive(dtgReceivded);
 			result=new String(dtgReceivded.getData(),0,dtgReceivded.getLength());
-			System.out.println("Package received from \""+result+"\"");
+			log.info("Package received from \""+result+"\"");
 			if(result.startsWith("dragonresponse"))
 				{
 				 result=dtgReceivded.getAddress().getHostAddress();
-				 System.out.println("Ip adres is "+result);	
+				 log.info("Ip adres is "+result);	
 				 return result;
 				}
 		} catch (IOException e) {
@@ -133,7 +136,7 @@ public class DragonUDP implements DragonConnect {
     	for(int tel=1;tel<255;tel++)
     	{
     		String scanAddr=base+"."+tel;
-    		System.out.println("Scan for "+scanAddr+" on port "+port);
+    		log.debug("Scan for "+scanAddr+" on port "+port);
     		try {
 				DatagramPacket sendPacket=new DatagramPacket(sendString.getBytes(),1,InetAddress.getByName(scanAddr),port);
 				socket.send(sendPacket);
@@ -165,7 +168,7 @@ public class DragonUDP implements DragonConnect {
     	try {
 			address = InetAddress.getByName(ipadress);
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}        
     }

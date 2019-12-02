@@ -1,39 +1,54 @@
 package dragonmotion.services;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-
-import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
+import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-
+import org.apache.log4j.Logger;
 import dragonmotion.DragonMotion;
+
 
 public class WaveService {
 	
-	private AudioFileFormat audioFileFormat;
-	private AudioInputStream audioInputStream;
+	Logger log=Logger.getLogger(WaveService.class);
 	
+	
+	private AudioInputStream audioInputStream;
 	private float sampleRate;
-	private float frameLength;
+	private int frameLength;
+	private int frameSize;
 	private int sampleFormat;
 	private float duration;
 	private int steps;
 	private int channels;
-	
+	private AudioFormat format;
+	private byte[] eightBitByteArray;
 	private int[][] samples;
-	
 	private static WaveService INSTANCE;
-	
 	private double maxvol = 1;
+	private Clip clip;
+	private File waveFile;
+	
 	
 	private WaveService()
 	{
 		
 	}
 	
+	
+	/**
+	 * Singleton initializer
+	 * @return
+	 */
 	public static WaveService getInstance()
 	{
 		if(INSTANCE==null)
@@ -44,68 +59,150 @@ public class WaveService {
 	}
 	
 	
+	/**
+	 * Write the sample file under the right name
+	 * @param audioFile
+	 * @return
+	 */
+	public boolean saveFile(File audioFile)
+	{
+		// Maak een audio stream
+		AudioInputStream ais=new AudioInputStream(new ByteArrayInputStream(eightBitByteArray), format, eightBitByteArray.length);
+		int rc=0;
+
+		try {
+			rc=AudioSystem.write(ais, Type.WAVE, audioFile);		//schrijf de audio stream
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		log.info("Wave file saved as "+audioFile.getAbsolutePath()+" size is "+rc);
+		return true;
+	}
+	
+	
+	/**
+	 * Load a wave fiel from disk
+	 * @param audioFile File handler
+	 * @return
+	 */
 	public boolean loadFile(File audioFile)
 	{
+		log.info("Load file "+audioFile.getAbsolutePath());
+		waveFile=audioFile;
 		try {
-			audioInputStream=AudioSystem.getAudioInputStream(audioFile);
-			AudioFormat format=audioInputStream.getFormat();
+			audioInputStream=AudioSystem.getAudioInputStream(audioFile);		// Open de audiofile naar een inputstream
+			format=audioInputStream.getFormat();								// Haal het formaat op
 			
-			sampleRate=format.getSampleRate();
-			frameLength=audioInputStream.getFrameLength();
-			sampleFormat=audioInputStream.getFormat().getSampleSizeInBits();
-			duration=frameLength/sampleRate;
-			steps=(int) (duration/DragonMotion.interval);
-			channels=audioInputStream.getFormat().getChannels();
-			samples = new int[audioInputStream.getFormat().getChannels()][(int) frameLength];
+			sampleRate		= format.getSampleRate();							// Zet de varaibelen				
+			frameLength		= (int)audioInputStream.getFrameLength();
+			frameSize		= format.getFrameSize();
+			sampleFormat	= format.getSampleSizeInBits();
+			duration		= frameLength/sampleRate;
+			steps			= (int) (duration/DragonMotion.interval);
+			channels		= format.getChannels();
+			samples			= new int[channels][frameLength];					// Dit wordt de definitieve lijst met samples
+			maxvol			= 0;												// Reset de max volume
+			int sampleIndex = 0;												// teller om langs de sample te gaan
+			eightBitByteArray = new byte[(int) (frameLength * frameSize)];		// Maak een 8bits buffer om de ruwe wave data in op te slaan
+			int result 		  = audioInputStream.read(eightBitByteArray);		// Vul de 8bits buffer met ruwe data
 			
-			System.out.println("SampleRate is "+sampleRate);
-			System.out.println("Size is "+(int)frameLength);
-			System.out.println("Samplesize is "+sampleFormat);
-			System.out.println("Duration is "+duration+" Seconds");
-			System.out.println("Number of steps is "+steps);
-			System.out.println("Number of channels is "+channels);
-			System.out.println("Number of samples is "+samples.length);
+			log.info("SampleRate is "+sampleRate);				// Some logging
+			log.info("Framelength is "+frameLength);
+			log.info("Framesize is "+frameSize);
+			log.info("Samplesize is "+sampleFormat);
+			log.info("Duration is "+duration+" Seconds");
+			log.info("Number of steps is "+steps);
+			log.info("Number of channels is "+channels);
+			log.info("Number of samples is "+samples.length);
+			log.info("eightBitByteArray size is "+eightBitByteArray.length);
+			log.info("There are "+result+" bytes read");
 			
-			byte[] eightBitByteArray = new byte[(int) (frameLength * audioInputStream.getFormat().getFrameSize())];
-			int result = audioInputStream.read(eightBitByteArray);
-			
-			int sampleIndex = 0;
-			for (int t = 0; t < eightBitByteArray.length;) {
-				for (int channel = 0; channel < audioInputStream.getFormat().getChannels(); channel++) {
-					int low = (int) eightBitByteArray[t];
-					t++;
-					int high = (int) eightBitByteArray[t];
-					t++;
-					int sample = getSixteenBitSample(high, low) + 16000;
-					if (sample > maxvol)
-					maxvol = sample;
-					samples[channel][sampleIndex] = sample;
-					// System.out.printf("S:%d M:%f\t",sample,maxvol);
+			if (sampleFormat == 8) {												// verwerk een 8 bits sample
+				for (int t = 0; t < eightBitByteArray.length; t++) {				// loop alle samples langs
+					for (int channel = 0; channel < channels; channel++) {			// Binnen de channels
+						int sample= (int) eightBitByteArray[t]+128;					// Laad een sample, een signed bit dus even een +128 correctie naar int
+						if (sample > maxvol)
+							maxvol = sample;										// Bepaal de hoogste sample
+						samples[channel][sampleIndex] = sample;						// En laadt deze in de lijst	
+					}
+					sampleIndex++;
 				}
-
-				sampleIndex++;
 			}
 			
+			if (sampleFormat == 16) {												// verwerk een 16 bits sample
+				for (int t = 0; t < eightBitByteArray.length; t++) {				// loop door de ruwe data
+					for (int channel = 0; channel < channels; channel++) {			// ga alle channels langs
+						int low = (int) eightBitByteArray[t];						// lage byte
+						t++;
+						int high = (int) eightBitByteArray[t];						// hoge byte
+
+						int sample = getSixteenBitSample(high, low) + 16000;		// Maak er 16 bits van
+						if (sample > maxvol)
+							maxvol = sample;										// en bepalen wat het maximum is
+						samples[channel][sampleIndex] = sample;						// En opslaan in de array
+					}
+					sampleIndex++;
+				}
+			}
+			log.info("Sample loaded size "+sampleIndex);
+			log.info("Maximal volume is "+maxvol);
 		} catch (UnsupportedAudioFileException | IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}
 		
-		
 		return true;
-		
 	}
+	
+	
+	/**
+	 * Stop playing the wave file
+	 */
+	public void stopWave()
+	{
+		if(clip==null)return;
+		clip.stop();
+	}
+	
+	
+	/**
+	 * Start the wave file
+	 */
+	public void playWave()
+	{
+		log.info("Play wave file");
+		try {
+			DataLine.Info info = new DataLine.Info(Clip.class, format);
+			clip=(Clip)AudioSystem.getLine(info);
+			clip.addLineListener(new LineListener(){
+				@Override
+				public void update(LineEvent event) {
+					log.debug("Event "+event.getFramePosition());
+					
+				}});
+			
+			audioInputStream=AudioSystem.getAudioInputStream(waveFile);
+			clip.open(audioInputStream);
+			
+			log.debug("frame len "+clip.getFrameLength());
+			log.debug("frame len n ms  "+clip.getMicrosecondLength());
+			clip.setMicrosecondPosition(0);
+			clip.start();
+			
+		} catch (LineUnavailableException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (UnsupportedAudioFileException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	protected int getSixteenBitSample(int high, int low) {
 		return (high << 8) + (low & 0x00ff);
 	}
-	
-	
-	public int getSteps()
-	{
-		return steps;
-	}
+
 	
 	
 	public int[][] getSample()
@@ -113,13 +210,20 @@ public class WaveService {
 		return samples;
 	}
 	
+	
 	public int sampleSize()
 	{
 		return (int)frameLength;
 	}
 	
+	
 	public double getMaxvol()
 	{
 		return maxvol;
+	}
+
+
+	public int getSteps() {
+		return steps;
 	}
 }

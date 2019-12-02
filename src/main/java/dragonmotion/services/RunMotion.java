@@ -1,15 +1,23 @@
 package dragonmotion.services;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
 
 import dragonmotion.DragonConnect;
 import dragonmotion.DragonMotion;
 import dragonmotion.DragonUDP;
 import dragonmotion.SingleTrack;
+import dragonmotion.WaveTrack;
 
-public class RunMotion implements Runnable {
+
+public class RunMotion implements Runnable,DragonEvent {
+	
+	Logger log=Logger.getLogger(RunMotion.class);
 	
 	ArrayList<SingleTrack> trackList=new ArrayList<>();
+	WaveTrack waveTrack;
 	
 	//float interval=DragonMotion.interval;
 	int steps;
@@ -19,17 +27,21 @@ public class RunMotion implements Runnable {
 	
 	DragonConnect network=DragonUDP.getService();
 	
-	public RunMotion(int port)
+	List<DragonEvent> eventHandlerList=new ArrayList<>();
+	
+	public RunMotion(int steps)
 	{
-
+		this.steps=steps;
 	}
 	
 	
 	
-	
+	// The movement thread
 	public void run() {
 		runFlag=true;
 		int numOfTracks=trackList.size();
+		
+		WaveService waveService=WaveService.getInstance();
 		
 		// Reset all the tracks to the begin 
 		for(int trackCount=0;trackCount<numOfTracks;trackCount++)
@@ -38,38 +50,42 @@ public class RunMotion implements Runnable {
 		}
 		
 		// Thr mail loop
-		System.out.println("Start the run");
-		for(int tel=0;tel<DragonMotion.steps;tel++)
+		log.info("Start the run");
+		waveService.playWave();
+		for(int tel=0;tel<steps;tel++)
 		{
-			System.out.printf("step  %d:\t",tel);
-			for(int trackCount=0;trackCount<numOfTracks;trackCount++)		// Loop langs elke track
+			log.debug(String.format("step  %d:\t",tel));
+			for(int trackCount=0;trackCount<numOfTracks;trackCount++)		// Loop langs elke track om de servo waardes op te halen
 			{
 				int servoValue=trackList.get(trackCount).getNextReal();		// haal de servo waarde op
-				trackList.get(trackCount).setLooppoint(tel);
-				System.out.printf("%d\t", servoValue);
+				int servo=trackList.get(trackCount).getServo();				// Haal de servo op
 				
-				slist[trackCount]=servoValue;								// Voeg de servo waarde aan de lijst to
+				slist[servo]=servoValue;									// Voeg de servo waarde aan de lijst to
 				if(runFlag!=true)											// Als de runflag false is stop dan alles
 					{
 						for(int counter=0;counter<numOfTracks;counter++)
 						{
 							trackList.get(counter).reset();
 						}
-						System.out.println("Loop ended manually");
+						waveService.stopWave();
+						log.info("Loop ended manually");
+						handle("Loop ended manually",1,0);
 						return;
 					}
 			}
+			//waveTrack.setLooppoint(tel);									// Zet het looppoint zodat ook hier de rode lijn verschuift
+			
 			network.setAllServos(slist);									// Set the servo's 
+			handle("loopstep",2,tel);						// Send an event to update the GUI
 			
-			//System.out.printf("\n");
-			
-			try {
+			try {															// Sleep for 50 seconds
 				//Thread.sleep((int)DragonMotion.interval*1000);
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
+			
 		}
 		
 		for(int trackCount=0;trackCount<numOfTracks;trackCount++)
@@ -77,7 +93,8 @@ public class RunMotion implements Runnable {
 			trackList.get(trackCount).reset();
 		}
 		
-		System.out.println("Loop ended");
+		log.info("Loop ended");
+		handle("Loop ended normally",0,0);
 	}
 
 	
@@ -91,6 +108,12 @@ public class RunMotion implements Runnable {
 		trackList.add(track);
 	}
 
+	
+	public void setWaveTrack(WaveTrack waveTrack)
+	{
+		this.waveTrack=waveTrack;
+	}
+	
 
 	public int getSteps() {
 		return steps;
@@ -105,4 +128,26 @@ public class RunMotion implements Runnable {
 	{
 		runFlag=false;
 	}
+
+
+	
+	// Event handlers
+	public final void setOnActionEvent(DragonEvent value)
+	{
+		eventHandlerList.add(value);
+	}
+
+
+
+	@Override
+	public void handle(String msg,int val1,int val2) {
+
+		for(DragonEvent value:eventHandlerList)
+		{
+			value.handle(msg,val1,val2);
+		}
+	}
+	
+
+
 }

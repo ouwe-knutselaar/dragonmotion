@@ -1,5 +1,7 @@
 package dragonmotion;
 
+import org.apache.log4j.Logger;
+
 import dragonmotion.services.WaveService;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
@@ -14,24 +16,27 @@ import javafx.stage.Stage;
 
 public class WaveTrack {
 
-	
+	Logger log=Logger.getLogger(WaveTrack.class);
 	
 	Label name=new Label("Samplefile");
 	WaveService waveService;
 	int steps;
 	
 	VBox rootNode = new VBox();
-	int canvaswidth=1000;
-	int barwidth = 10;
-	double maxvol = 1;
+
+	private int barwidth = 10;
+
 	final GraphicsContext gc;
+	private int looppoint = 0;
 	
-	public WaveTrack(final Stage stage) {
+	
+	public WaveTrack(final Stage stage,int steps) {
 		
 		waveService=WaveService.getInstance();     
-		steps=waveService.getSteps();
+		this.steps=steps;
 		
-		Canvas canvas = new Canvas(steps*10, 100);
+		Canvas canvas = new Canvas(steps*barwidth, 120);
+		log.info("Canvas width="+canvas.getWidth());
 		gc = canvas.getGraphicsContext2D();
 		drawSample(gc);
 		
@@ -40,11 +45,7 @@ public class WaveTrack {
 	}
 	
 
-	
-	
-	
-	
-	
+
 	private void drawSample(GraphicsContext gc) {
 		if (gc == null)
 			return;
@@ -55,18 +56,20 @@ public class WaveTrack {
 		gc.strokeLine(0, 50, gc.getCanvas().getWidth(), 50);
 		gc.strokeLine(0, 100, gc.getCanvas().getWidth(), 100);
 		
-		int samples[][]=waveService.getSample();
-		int size=waveService.sampleSize();
 		
-		if (samples != null)
+		int samples[][]=waveService.getSample();
+		if (samples != null)											// Als er geen sample is geladen wordt en niets getoond
 		{
-			int oldSampleVal=samples[0][0];
-			int samstep = size /(steps*barwidth);		// We vullen ook de barwidth voor een mooie sample
-			double factor = 100.0 / waveService.getMaxvol();
+			int size         = waveService.sampleSize();
+			int oldSampleVal = samples[0][0];
+			int samstep      = size /(steps*barwidth);						// We vullen ook de barwidth voor een mooie sample
+			double factor    = 100.0 / waveService.getMaxvol();	
+			
+			log.debug("factor is "+factor);
 			for (int tel = 1; tel < steps*barwidth; tel++)
 			{
 				int sampleVal = samples[0][tel * samstep];
-				System.out.printf("%d %f \n", tel,  factor);
+				//log.info(String.format("tel %d  sampleval %d  factor %f", tel,sampleVal,  sampleVal * factor));
 				gc.strokeLine(tel-1, oldSampleVal* factor, tel, sampleVal * factor);
 				oldSampleVal=sampleVal;
 			}
@@ -77,14 +80,28 @@ public class WaveTrack {
 			gc.strokeLine(0, 100, gc.getCanvas().getWidth(), 100);
 			for (int tel = 0; tel < steps; tel = tel + 10) {
 				gc.strokeLine(tel * barwidth, 0, tel * barwidth, 100);
-				gc.fillText("" + tel * DragonMotion.interval + "ms", tel * barwidth, 110);
+				gc.fillText("" + tel * DragonMotion.interval*1000 + "ms", tel * barwidth, 110);
 			}
 		}
 		
+		gc.setFill(Color.RED);
+		gc.setStroke(Color.RED);
+		gc.setLineWidth(2.0);
+		
+		gc.strokeLine(looppoint * barwidth, 0, looppoint * barwidth, 100);
+		log.debug("Redraw canvas of wavetrack with looppoint "+looppoint+" barwidth "+barwidth);
+		
 	}
+	
 	
 	public Node getNode() {
 		// TODO Auto-generated method stub
 		return rootNode;
+	}
+	
+	
+	public void setLooppoint(int point) {
+		this.looppoint = point;
+		drawSample(gc);
 	}
 }

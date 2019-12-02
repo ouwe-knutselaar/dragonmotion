@@ -5,6 +5,9 @@ import java.io.IOException;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
+
+import org.apache.log4j.Logger;
+
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -14,6 +17,8 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class AudioTrack {
+	
+	Logger log=Logger.getLogger(this.getClass().getName());
 	FlowPane rootNode = new FlowPane();
 	
 	final GraphicsContext gc;
@@ -92,20 +97,20 @@ public class AudioTrack {
 	{
 		try {
 			AudioInputStream ais = AudioSystem.getAudioInputStream(audioFile);
-			System.out.println("SampleBits " + ais.getFormat().getSampleSizeInBits());
-			System.out.println("Channels " + ais.getFormat().getChannels());
-			System.out.println("Samplerate " + ais.getFormat().getSampleRate());
-			System.out.println("FrameSize " + ais.getFormat().getFrameSize());
-			System.out.println("FrameLength " + ais.getFrameLength());
+			log.info("SampleBits " + ais.getFormat().getSampleSizeInBits());
+			log.info("Channels " + ais.getFormat().getChannels());
+			log.info("Samplerate " + ais.getFormat().getSampleRate());
+			log.info("FrameSize " + ais.getFormat().getFrameSize());
+			log.info("FrameLength " + ais.getFrameLength());
 			byte[] eightBitByteArray = new byte[(int) (ais.getFrameLength() * ais.getFormat().getFrameSize())];
 			int result = ais.read(eightBitByteArray);
 			samplelength = (int) ais.getFrameLength();
 			samples = new int[ais.getFormat().getChannels()][(int) ais.getFrameLength()];
 			maxvol = 1;
 			time=ais.getFrameLength()/ais.getFormat().getSampleRate();
-			System.out.println("Time is " + time);
+			log.info("Time is " + time);
 			steps=(int) ((time*1000.0)/DragonMotion.interval);
-			System.out.println("Servo steps is " + steps);
+			log.info("Servo steps is " + steps);
 			
 			int sampleIndex = 0;
 			for (int t = 0; t < eightBitByteArray.length;) {
