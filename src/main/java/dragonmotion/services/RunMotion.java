@@ -57,8 +57,8 @@ public class RunMotion implements Runnable,DragonEvent {
 			log.debug(String.format("step  %d:\t",tel));
 			for(int trackCount=0;trackCount<numOfTracks;trackCount++)		// Loop langs elke track om de servo waardes op te halen
 			{
-				int servoValue=trackList.get(trackCount).getNextReal();		// haal de servo waarde op
-				int servo=trackList.get(trackCount).getServo();				// Haal de servo op
+				int servoValue=trackList.get(trackCount).getNextReal()*trackList.get(trackCount).getFactor();		// haal de servo waarde op op en vermenigvuldig deze met de factor
+				int servo=(int)(trackList.get(trackCount).getServo());	// Haal de servo 
 				
 				slist[servo]=servoValue;									// Voeg de servo waarde aan de lijst to
 				if(runFlag!=true)											// Als de runflag false is stop dan alles

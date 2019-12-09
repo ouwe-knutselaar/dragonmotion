@@ -33,6 +33,8 @@ public class SingleTrack {
 	private int valueFields[];
 	private int looppoint = 0;
 	private int barwidth = 10;
+	
+	private int factor;
 
 
 	private int min;
@@ -50,6 +52,10 @@ public class SingleTrack {
 	private Canvas canvas;
 
 	private Label namelabel;
+	private Label srvlbl=new Label("servo");
+	private Label minlbl=new Label("min");
+	private Label maxlbl=new Label("max");
+	private Label restlbl=new Label("rest");
 	private TextField maxField = new TextField();
 	private TextField minField = new TextField();
 	private TextField restposField = new TextField();
@@ -60,14 +66,15 @@ public class SingleTrack {
 	private Button maximize = new Button("maximize");
 	private CheckBox record = new CheckBox("Record");
 	private DragonConnect connect = DragonUDP.getService();			// Get the network
-	private boolean expand=true;									// Set the canvas on visible
+	private boolean expand=false;									// Set the canvas on visible
 	private FlowPane topPane;
 	private final String name;										// Name of the servo
 	private float canvasSize;
+	private boolean recordingmode=false;							// Is it recording or not?
 	
 
 
-	public SingleTrack(final String newname, int servoval, int minimum, int maximum, int newrestpos, int newsteps)
+	public SingleTrack(final String newname, int servoval, int minimum, int maximum, int newrestpos, int newsteps,int factor)
 	{
 		
 		steps		= newsteps;
@@ -76,9 +83,10 @@ public class SingleTrack {
 		restpos		= newrestpos;									// restposition servo
 		canvasSize	= ((float) (max - min));
 		name	 	= newname;
-		servo	 	= Integer.parseInt(servoField.getText());
+		servo	 	= servoval;
 		valueFields	= new int[steps];
 		namelabel	= new Label(name);
+		this.factor	= factor;
 		
 		log.info(String.format(" Default value for %s is %d", name, (int) (restpos - minimum)));
 		for (int tel = 0; tel < steps; tel++) {
@@ -92,7 +100,7 @@ public class SingleTrack {
 		BorderStroke borderStroke = new BorderStroke(Color.DARKGRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY,BorderWidths.DEFAULT);
 		rootNode.setBorder(new Border(borderStroke));	
 		rootNode.getChildren().add(topPane);
-		rootNode.getChildren().add(canvas);
+		if(expand)rootNode.getChildren().add(canvas);
 
 		//
 		connect.setServo(servo, restpos);
@@ -106,14 +114,20 @@ public class SingleTrack {
 		topPane		 = new FlowPane();						// bovenkant van de track, bevat de knoppen
 		
 		sl.valueProperty().set(restpos - min);
+		sl.setPrefWidth(200);
+		sl.setMin(min);
+		sl.setMax(max);
 		sl.valueProperty().addListener(new ChangeListener<Number>() {
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-
+				if(recordingmode)
+				{
+					valueFields[counter]=(int)sl.getValue();
+				}
 				// realStep=((float)(max-min))/100;
-				int newval = min + (int) newValue.floatValue();
-				log.debug("Slider changed " + newval + " slider at " + newValue + " canvassize is " + canvasSize);
-				connect.setServo(servo, newval);
+				int newval = (int) newValue.intValue();
+				log.debug("Slider changed " + newval + " slider at " + newValue + " canvassize is " + canvasSize+" with factor "+factor);
+				connect.setServo(servo, newval*factor);
 
 			}
 		});
@@ -129,6 +143,11 @@ public class SingleTrack {
 				log.info("Text changed to " + newValue);
 				max = Integer.parseInt(newValue);
 				canvasSize = (float) (max - min);
+				sl.valueProperty().set(restpos - min);
+				sl.setPrefWidth(200);
+				sl.setMin(min);
+				sl.setMax(max);
+				redraw();
 			}
 		});
 
@@ -140,13 +159,13 @@ public class SingleTrack {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				log.info("Text changed to " + newValue);
-				try {
-					min = Integer.parseInt(newValue);
-					canvasSize = (float) (max - min);
-				} catch (NumberFormatException e) {
-
-				}
-
+				min = Integer.parseInt(newValue);
+				canvasSize = (float) (max - min);
+				sl.valueProperty().set(restpos - min);
+				sl.setPrefWidth(200);
+				sl.setMin(min);
+				sl.setMax(max);
+				redraw();
 			}
 		});
 
@@ -154,6 +173,20 @@ public class SingleTrack {
 		restposField.maxWidth(100);
 		restposField.setPrefColumnCount(5);
 		restposField.setText("" + restpos);
+		restposField.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				log.info("Text changed to " + newValue);
+				restpos = Integer.parseInt(newValue);
+				canvasSize = (float) (max - min);
+				sl.valueProperty().set(restpos - min);
+				sl.setPrefWidth(200);
+				sl.setMin(min);
+				sl.setMax(max);
+				redraw();
+			}
+		});
+		
 
 		servoField.prefWidth(100);
 		servoField.maxWidth(100);
@@ -204,13 +237,29 @@ public class SingleTrack {
 				maximize();
 			}
 		});
+		
+		
+		record.setSelected(false);
+		record.selectedProperty().addListener(new ChangeListener<Boolean>() {
 
-		servoField.setText("" + servo);
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				recordingmode=newValue;
+				if(recordingmode)log.info(name+" is set to record");
+				else log.info(name+" has recording disabled");
+			}
+		});
+
+		
 		namelabel.setPrefWidth(200);	
 		topPane.getChildren().add(namelabel);
+		topPane.getChildren().add(srvlbl);
 		topPane.getChildren().add(servoField);
+		topPane.getChildren().add(minlbl);
 		topPane.getChildren().add(minField);
+		topPane.getChildren().add(maxlbl);
 		topPane.getChildren().add(maxField);
+		topPane.getChildren().add(restlbl);
 		topPane.getChildren().add(restposField);
 		topPane.getChildren().add(sl);
 		topPane.getChildren().add(smooth);
@@ -383,7 +432,9 @@ public class SingleTrack {
 	}
 
 	
-	
+	/**
+	 * Redraw this graphic node
+	 */
 	public void redraw() {
 		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
 		drawMotionLine(gc);
@@ -391,9 +442,11 @@ public class SingleTrack {
 	}
 
 	
-	
+	/**
+	 * Return the nod to add it to the main screen
+	 * @return
+	 */
 	public Node getNode() {
-		// TODO Auto-generated method stub
 		return rootNode;
 	}
 
@@ -406,6 +459,7 @@ public class SingleTrack {
 
 	
 	public int getNextReal() {
+		
 		if (counter < steps)
 			counter++;
 		return (int) ((valueFields[counter - 1]) + min);
@@ -465,6 +519,12 @@ public class SingleTrack {
 		return name;
 	}
 
+	
+	public int getFactor()
+	{
+		return factor;
+	}
+	
 	public void fillTrack(String string) {
 
 		String valueStringList[] = string.split(" ");
