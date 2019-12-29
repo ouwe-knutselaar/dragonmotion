@@ -34,20 +34,18 @@ public class SingleTrack {
 	private int looppoint = 0;
 	private int barwidth = 10;
 	
-	private int factor;
+	private int factor;						// Verhouding tussen waarde op scherm en de waarde op de servo
+	private int min;						// Ondergrens
+	private int max;						// Bovengrens
+	private int restpos;					// Rustpositie
+	private int servo = 1;					// Nummber servo
+	private boolean recordingmode=false;	// Is it recording or not?
+	private int counter = 0;				// Positie cursor tijdens een run
 
-
-	private int min;
-	private int max;
-	private int restpos;
-	private int servo = 1;
-
-	private int counter = 0;
-
-	private double oldx = -1;
-	private double oldy = -1;
-	private double newx, newy;
-
+	private double oldx = -1;				// The movement line
+	private double oldy = -1;				// old en new position
+	private double newx, newy;				//
+	
 	private VBox rootNode = new VBox();								// De basis box met alle track objecten
 	private Canvas canvas;
 
@@ -70,7 +68,7 @@ public class SingleTrack {
 	private FlowPane topPane;
 	private final String name;										// Name of the servo
 	private float canvasSize;
-	private boolean recordingmode=false;							// Is it recording or not?
+	
 	
 
 
@@ -89,6 +87,7 @@ public class SingleTrack {
 		this.factor	= factor;
 		
 		log.info(String.format(" Default value for %s is %d", name, (int) (restpos - minimum)));
+		log.info(String.format(" min is %d, max is %d, restpos is %d, factor is %d",min,max,restpos,factor));
 		for (int tel = 0; tel < steps; tel++) {
 			valueFields[tel] = (int) (restpos - minimum);
 		}
@@ -278,10 +277,11 @@ public class SingleTrack {
 		
 		Canvas canvas=new Canvas(length,heigth);
 		
-		canvas.setOnMousePressed(new EventHandler<MouseEvent>() {
+		// A mouse button bowb
+		canvas.setOnMousePressed(new EventHandler<MouseEvent>() {			
 			@Override
 			public void handle(MouseEvent ev) {
-				System.out.println("Event is " + ev.getEventType());
+				log.debug("Event is " + ev.getEventType());		// Possible start of a drag, store the current mouse position
 				oldx = ev.getX();
 				oldy = ev.getY();
 
@@ -292,9 +292,9 @@ public class SingleTrack {
 			@Override
 			public void handle(MouseEvent ev) {
 				// System.out.println("Event is "+ ev.getEventType());
-				newx = ev.getX();
+				newx = ev.getX();								// Store the latest mouse position, 
 				newy = ev.getY();
-				drawMotionLine(gc);
+				drawMotionLine(gc);								// Draw the line but we are still moving
 			}
 		});
 
@@ -410,22 +410,28 @@ public class SingleTrack {
 		drawMotionLine(gc);
 	}
 
-	public void straiten(double startx, double starty, double endx, double endy) {
+	
+	// Here we create the new line after the mouse button is released
+	private void straiten(double startx, double starty, double endx, double endy) {
 
-		int intBegin = (int) (startx / 10);
-		int intEnd = (int) (endx / 10); // bepaal de stappen
-		int size = intEnd - intBegin;
+		int intBegin = (int) (startx / 10);										// Determine the start point as bar
+		int intEnd = (int) (endx / 10); // bepaal de stappen					// And the end point	
+		int size = intEnd - intBegin;											// The number of steps or size of the new part
 
-		System.out.println("Begin " + intBegin + "  end " + intEnd + " size " + size);
-		System.out.println("BeginY " + starty + "  endY " + endy);
+		log.debug("Begin " + intBegin + "  end " + intEnd + " size " + size);	// A little logging
+		log.debug("BeginY " + starty + "  endY " + endy);
 
-		double arc = (endy - starty) / size; // maak de helling
-		System.out.println("Arc is " + arc);
+		double arc = (endy - starty) / size; 									// Determine the arc of the line 		
+		log.debug("Arc is " + arc);
 
-		for (int tel = 0; tel < size; tel++) {
-			// System.out.print("# "+tel+" oldval "+valueFields[tel+intBegin]);
+		for (int tel = 0; tel < size; tel++) {									// Fill the fields that are selected
 			if (tel + intBegin < steps & tel + intBegin >= 0)
-				valueFields[tel + intBegin] = (int) (starty + (int) (tel * arc));
+				{
+					int newvalue=(int) (starty + (int) (tel * arc));
+					if(newvalue<0)newvalue=0;
+					if(newvalue>canvasSize)newvalue=(int)canvasSize;
+					valueFields[tel + intBegin] = newvalue;
+				}
 			// System.out.print("newval "+valueFields[tel+intBegin]+"\n");
 		}
 

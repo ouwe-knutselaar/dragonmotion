@@ -33,6 +33,7 @@ public class WaveService {
 	private AudioFormat format;
 	private byte[] eightBitByteArray;
 	private int[][] samples;
+	private int[][] lowPassSamples;
 	private static WaveService INSTANCE;
 	private double maxvol = 1;
 	private Clip clip;
@@ -101,6 +102,7 @@ public class WaveService {
 			steps			= (int) (duration/DragonMotion.interval);
 			channels		= format.getChannels();
 			samples			= new int[channels][frameLength];					// Dit wordt de definitieve lijst met samples
+			lowPassSamples	= new int[channels][frameLength];					// Dit wordt de lowpass lijst
 			maxvol			= 0;												// Reset de max volume
 			int sampleIndex = 0;												// teller om langs de sample te gaan
 			eightBitByteArray = new byte[(int) (frameLength * frameSize)];		// Maak een 8bits buffer om de ruwe wave data in op te slaan
@@ -146,6 +148,9 @@ public class WaveService {
 			}
 			log.info("Sample loaded size "+sampleIndex);
 			log.info("Maximal volume is "+maxvol);
+			log.info("Apply lowpassfilter");
+			lowPassFilter(882);
+			
 		} catch (UnsupportedAudioFileException | IOException e) {
 			e.printStackTrace();
 			return false;
@@ -199,6 +204,82 @@ public class WaveService {
 	}
 	
 	
+	
+	
+	
+	
+	// Moving average filter
+	private void lowPassFilter_temp2(int points)
+	{
+		int bias=(int)(maxvol/2);
+		for(int count=points;count<frameLength-points;count++)
+		{
+			int sum=0;
+			for(int tel=-points;tel<points;tel++)
+			{
+				sum=sum+Math.abs(samples[0][count+tel]-bias);		// Sum the value
+			}
+			int avg=sum/(2*points+1);
+			lowPassSamples[0][count]=avg;
+		}	
+	}
+	
+	// Moving average filter
+	private void lowPassFilter_temp(int points) 
+	{
+		int pos=0;
+		boolean loopflag=true;
+		int bias = (int) (maxvol / 2);
+		
+		while(loopflag)
+		{	
+			log.debug("LPF position "+pos);
+			int sum=0;
+			for(int tel=0;tel<points;tel++)
+			{
+				sum=sum+samples[0][pos+tel];
+			}
+			int avg=sum/points;
+			for(int tel=0;tel<points;tel++)
+			{
+				lowPassSamples[0][pos+tel]=avg;
+			}
+			pos=pos+points;
+			if(pos+points>frameLength)loopflag=false;
+		}
+		
+	}
+	
+	// Moving average filter
+	private void lowPassFilter(int points) 
+		{
+			int minpoint=(int) maxvol;
+			int pos=0;
+			boolean loopflag=true;
+			int bias = (int) (maxvol / 2);
+			
+			while(loopflag)
+			{	
+				//log.debug("LPF position "+pos);
+				int max=0;
+				for(int tel=0;tel<points;tel++)
+				{
+					if(max<samples[0][pos+tel])max=samples[0][pos+tel];
+					if(minpoint>samples[0][pos+tel])minpoint=samples[0][pos+tel];
+				}
+				;
+				for(int tel=0;tel<points;tel++)
+				{
+					lowPassSamples[0][pos+tel]=max-minpoint;
+				}
+				pos=pos+points;
+				if(pos+points>frameLength)loopflag=false;
+			}
+			
+		}
+	
+	
+	
 	protected int getSixteenBitSample(int high, int low) {
 		return (high << 8) + (low & 0x00ff);
 	}
@@ -208,6 +289,11 @@ public class WaveService {
 	public int[][] getSample()
 	{
 		return samples;
+	}
+	
+	public int[][] getLowPass()
+	{
+		return lowPassSamples;
 	}
 	
 	

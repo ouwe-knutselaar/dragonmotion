@@ -61,28 +61,43 @@ public class WaveTrack {
 		
 		gc.setStroke(Color.DARKGRAY);
 		int samples[][]=waveService.getSample();
-		if (samples != null)											// Als er geen sample is geladen wordt en niets getoond
+		int lowpasssamples[][]=waveService.getLowPass();
+		if (samples != null)												// Als er geen sample is geladen wordt en niets getoond
 		{
 			int size         = waveService.sampleSize();
 			
 			int samstep      = size /(steps*barwidth);						// We vullen ook de barwidth voor een mooie sample
 			double factor    = canvassize / waveService.getMaxvol();	
-			int oldSampleVal = samples[0][0];
 			
+			// Draw the samples
+			gc.setStroke(Color.DARKGRAY);						// The sample is darkgray
+			int oldSampleVal = samples[0][0];					// Set the startpoint
 			log.debug("factor is "+factor);
-			for (int tel = 1; tel < steps*barwidth; tel++)					// Draw the sample
+			for (int tel = 1; tel < steps*barwidth; tel++)					
 			{
 				int sampleVal = samples[0][tel * samstep];
-				//log.info(String.format("tel %d  sampleval %d  factor %f", tel,sampleVal,  sampleVal * factor));
 				gc.strokeLine(tel-1, 20+oldSampleVal* factor, tel, 20 +sampleVal * factor);
 				oldSampleVal=sampleVal;
 			}
-			gc.setStroke(Color.BLUE);
+			
+			// Draw the lowpass
+			gc.setStroke(Color.GREEN);
+			oldSampleVal = lowpasssamples[0][0];					// Set the startpoint
+			log.debug("factor is "+factor);
+			for (int tel = 1; tel < steps*barwidth; tel++)					
+			{
+				int sampleVal = lowpasssamples[0][tel * samstep];
+				gc.strokeLine(tel-1, 20+oldSampleVal* factor, tel, 20 +sampleVal * factor);
+				oldSampleVal=sampleVal;
+			}
+			
+			
+			gc.setStroke(Color.BLUE);										// Draw the grid lines
 			gc.setFont(Font.getDefault());
 			gc.strokeLine(0, 0, gc.getCanvas().getWidth(), 0);
 			gc.strokeLine(0, canvassize/2, gc.getCanvas().getWidth(), canvassize/2);
 			gc.strokeLine(0, canvassize, gc.getCanvas().getWidth(), canvassize);
-			for (int tel = 0; tel < steps; tel = tel + 10) {
+			for (int tel = 0; tel < steps; tel = tel + 10) {				// Vertical grid lines
 				gc.strokeLine(tel * barwidth, 0, tel * barwidth, canvassize);
 				gc.fillText("" + tel * DragonMotion.interval*1000 + "ms", tel * barwidth, 110);
 			}

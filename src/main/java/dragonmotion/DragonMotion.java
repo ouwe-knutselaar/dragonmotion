@@ -64,7 +64,7 @@ public class DragonMotion extends Application {
 	RunMotion runMotion;
 	List<SingleTrack> TrackList = new ArrayList<>();
 
-	Label msgst = new Label("Run sequence <SPACE>");
+	Label msgst = new Label("Run sequence <S>");
 	Button start = new Button("Start");
 
 	Label msgwave = new Label("Play wave");
@@ -79,28 +79,28 @@ public class DragonMotion extends Application {
 	Label msgtonull = new Label("All servos to null");
 	Button tonull = new Button("To Null");
 
-	Label msgseqname = new Label("Name sequence");
-	TextField trackName = new TextField("noname");
+	private Label msgseqname = new Label("Name sequence");
+	private TextField trackName = new TextField("noname");
 
-	Label msgsip = new Label("IP Address sequence");
-	TextField ipaddress = new TextField(ipadres);
+	private Label msgsip = new Label("IP Address sequence");
+	private TextField ipaddress = new TextField(ipadres);
 
-	Label messages = new Label("messages");
+	private Label messages = new Label("messages");
 	
-	DragonCalibrate calibrate=new DragonCalibrate();
+	private DragonCalibrate calibrate=new DragonCalibrate();
 
-	WaveService waveService = WaveService.getInstance();
+	private WaveService waveService = WaveService.getInstance();
 
 	private boolean threadFlag = false;
 
+	private ScrollPane rightScrollPane;
+	private GridPane buttonPane=new GridPane();;
+	private FlowPane msgPane=new FlowPane();
+	private Scene mainScene;
 
-	GridPane buttonPane=new GridPane();;
-	FlowPane msgPane=new FlowPane();
-	Scene mainScene;
-
-	BorderPane root;
-	Stage primaryStage;
-	WaveTrack waveTrack;
+	private BorderPane root;
+	private Stage primaryStage;
+	private WaveTrack waveTrack;
 
 	public static void main(String[] args) {
 		launch();
@@ -268,8 +268,9 @@ public class DragonMotion extends Application {
 		rightPane.getChildren().add(waveTrack.getNode());
 		runMotion.setWaveTrack(waveTrack);
 
-		ScrollPane rightScrollPane = new ScrollPane();
+		rightScrollPane = new ScrollPane();		// Set the whole rightpane in a scrollpane
 		rightScrollPane.setContent(rightPane);
+		
 
 		return rightScrollPane;
 	}
